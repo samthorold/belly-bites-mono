@@ -1,8 +1,8 @@
 FROM python:3.13-slim
 
-RUN python -m pip install uv
-
 RUN mkdir /app
+
+RUN python -m pip install uv
 
 WORKDIR /app
 
