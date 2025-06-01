@@ -1,6 +1,7 @@
 FROM python:3.13-slim
 
-RUN mkdir /app
+RUN pwd
+RUN ls
 
 RUN python -m pip install uv
 
