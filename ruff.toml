@@ -1,4 +1,4 @@
-# Exclude a variety of commonly ignored directories.
+
 exclude = [
     ".bzr",
     ".direnv",
@@ -38,7 +38,6 @@ exclude = [
 line-length = 88
 indent-width = 4
 
-# Assume Python 3.9
 target-version = "py313"
 
 [lint]

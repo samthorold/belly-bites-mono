@@ -29,7 +29,7 @@ class FoodGroup(Enum):
 @dataclass(frozen=True)
 class Meal:
     meal_id: int
-    user_id: int
+    user_id: str
     name: str
     good_groups: list[FoodGroup]
 
