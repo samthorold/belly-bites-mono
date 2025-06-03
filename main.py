@@ -43,7 +43,7 @@ async def home(request: Request) -> HTMLResponse:
     user = request.session.get("user")
     logger.info("User session: %s", user)
     template = templates.get_template("home.html")
-    return HTMLResponse(template.render(app_name=settings.APP_NAME))
+    return HTMLResponse(template.render(app_name=settings.APP_NAME, user=user))
 
 
 async def callback(request: Request) -> RedirectResponse:
@@ -63,10 +63,20 @@ async def login(request: Request) -> Any:
     return await auth0.authorize_redirect(request, redirect_uri)
 
 
+async def logout(request: Request) -> RedirectResponse:
+    request.session.pop("user", None)
+    url = "https://" + settings.AUTH0_DOMAIN + "/v2/logout"
+    url += "?returnTo=" + str(request.url_for("home"))
+    url += "&client_id=" + settings.AUTH0_CLIENT_ID
+    logger.info("Logout URL: %s", url)
+    return RedirectResponse(url=url)
+
+
 app = Starlette(
     routes=[
         Route("/", home, methods=["GET"], name="home"),
         Route("/login", login, methods=["GET"], name="login"),
+        Route("/logout", logout, methods=["GET"], name="logout"),
         Route("/callback", callback, methods=["GET", "POST"], name="callback"),
     ]
 )
