@@ -31,7 +31,7 @@ oauth = OAuth()
 oauth.register(  # pyright: ignore[reportUnknownMemberType]
     "auth0",
     client_id=settings.AUTH0_CLIENT_ID,
-    client_secret=settings.AUTH0_CLIENT_SECRET,
+    client_secret=settings.AUTH0_CLIENT_SECRET.get_secret_value(),
     client_kwargs={
         "scope": "openid profile email",
     },
@@ -47,8 +47,9 @@ async def home(request: Request) -> HTMLResponse:
 
 
 async def callback(request: Request) -> RedirectResponse:
-    auth0 = oauth.create_client("auth0")
-    token = await auth0.authorize_access_token(request)
+    # auth0 = oauth.create_client("auth0")
+    # token = await auth0.authorize_access_token(request)
+    token = await oauth.auth0.authorize_access_token(request)
     user = token["userinfo"]
     logger.info("User info: %s", user)
     if user:
@@ -57,10 +58,11 @@ async def callback(request: Request) -> RedirectResponse:
 
 
 async def login(request: Request) -> Any:
-    auth0 = oauth.create_client("auth0")
+    # auth0 = oauth.create_client("auth0")
     redirect_uri = request.url_for("callback")
     logger.info("Redirect URI: %s", redirect_uri)
-    return await auth0.authorize_redirect(request, redirect_uri)
+    # return await auth0.authorize_redirect(request, redirect_uri)
+    return await oauth.auth0.authorize_redirect(request, redirect_uri=redirect_uri)
 
 
 async def logout(request: Request) -> RedirectResponse:
@@ -81,4 +83,6 @@ app = Starlette(
     ]
 )
 
-app.add_middleware(SessionMiddleware, secret_key=settings.APP_SECRET_KEY)
+app.add_middleware(
+    SessionMiddleware, secret_key=settings.APP_SECRET_KEY.get_secret_value()
+)
