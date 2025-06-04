@@ -1,9 +1,6 @@
 import logging
 from typing import Any
 
-from authlib.integrations.starlette_client import (  # pyright: ignore[reportMissingTypeStubs]
-    OAuth,
-)
 from jinja2 import Environment, PackageLoader, select_autoescape
 from starlette.applications import Starlette
 from starlette.middleware.sessions import SessionMiddleware
@@ -11,7 +8,9 @@ from starlette.requests import Request
 from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.routing import Route
 
+from app.auth import Auth
 from app.config import Settings
+from app.models import UserInfo
 
 settings = Settings()
 
@@ -27,42 +26,35 @@ logger.info(settings)
 templates = Environment(loader=PackageLoader("app"), autoescape=select_autoescape())
 
 
-oauth = OAuth()
-oauth.register(  # pyright: ignore[reportUnknownMemberType]
-    "auth0",
+auth = Auth(
     client_id=settings.AUTH0_CLIENT_ID,
     client_secret=settings.AUTH0_CLIENT_SECRET.get_secret_value(),
-    client_kwargs={
-        "scope": "openid profile email",
-    },
-    server_metadata_url=f"https://{settings.AUTH0_DOMAIN}/.well-known/openid-configuration",
+    domain=settings.AUTH0_DOMAIN,
 )
 
 
-async def home(request: Request) -> HTMLResponse:
+async def home(request: Request) -> HTMLResponse | RedirectResponse:
     user = request.session.get("user")
     logger.info("User session: %s", user)
+    # if user is None:
+    #     logger.info("User not logged in, redirecting to login")
+    #     return RedirectResponse(url="/login")
+    user = UserInfo.model_validate_json(user).given_name if user else "Anon"
     template = templates.get_template("home.html")
     return HTMLResponse(template.render(app_name=settings.APP_NAME, user=user))
 
 
 async def callback(request: Request) -> RedirectResponse:
-    # auth0 = oauth.create_client("auth0")
-    # token = await auth0.authorize_access_token(request)
-    token = await oauth.auth0.authorize_access_token(request)
-    user = token["userinfo"]
-    logger.info("User info: %s", user)
-    if user:
-        request.session["user"] = user
+    token = await auth.authorise_access_token(request)
+    logger.info("Token received: %s", token)
+    request.session["user"] = token.userinfo.model_dump_json()
     return RedirectResponse(url="/")
 
 
 async def login(request: Request) -> Any:
-    # auth0 = oauth.create_client("auth0")
     redirect_uri = request.url_for("callback")
     logger.info("Redirect URI: %s", redirect_uri)
-    # return await auth0.authorize_redirect(request, redirect_uri)
-    return await oauth.auth0.authorize_redirect(request, redirect_uri=redirect_uri)
+    return await auth.authorise_redirect(request, redirect_uri=redirect_uri)
 
 
 async def logout(request: Request) -> RedirectResponse:
