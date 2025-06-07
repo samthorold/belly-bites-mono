@@ -4,6 +4,7 @@ from datetime import date, datetime
 from enum import Enum
 
 from pydantic import BaseModel, EmailStr, HttpUrl
+from starlette.datastructures import FormData
 
 
 class UserInfo(BaseModel):
@@ -62,6 +63,23 @@ class NewMeal(BaseModel):
     date: date
     name: str
     food_groups: list[FoodGroup]
+
+    @classmethod
+    def from_form_data(cls, data: FormData, user_id: str) -> NewMeal:
+        return NewMeal(
+            user_id=user_id,
+            name=str(data.get("name")),
+            date=(
+                datetime.strptime(str(data.get("date")), "%Y-%m-%d").date()
+                if data.get("date")
+                else date.today()
+            ),
+            food_groups=(
+                [FoodGroup(fg) for fg in data.getlist("food_groups")]
+                if data.get("food_groups")
+                else []
+            ),
+        )
 
 
 class Meal(NewMeal):
