@@ -11,6 +11,8 @@ from app.models import AuthTokenResponse
 
 class Auth:
     def __init__(self, client_id: str, client_secret: str, domain: str):
+        self.client_id = client_id
+        self.domain = domain
         self.oauth = OAuth()
         self.oauth.register(  # pyright: ignore[reportUnknownMemberType]
             "auth0",
@@ -33,4 +35,10 @@ class Auth:
     async def authorise_redirect(self, request: Request, redirect_uri: URL) -> Any:
         return await self.oauth.auth0.authorize_redirect(  # pyright: ignore
             request, redirect_uri=redirect_uri
+        )
+
+    def logout_url(self, return_to: str) -> str:
+        return (
+            f"https://{self.domain}/v2/logout?"
+            f"returnTo={return_to}&client_id={self.client_id}"
         )

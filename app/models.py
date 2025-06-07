@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import date, datetime
+from enum import Enum
 
 from pydantic import BaseModel, EmailStr, HttpUrl
 
@@ -29,3 +30,34 @@ class AuthTokenResponse(BaseModel):
     token_type: str
     expires_at: int
     userinfo: UserInfo
+
+
+class FoodGroup(Enum):
+    FRUIT = "fruit"
+    VEGETABLE = "vegetable"
+    WHOLE_GRAIN = "whole_grain"
+    LEGUME = "legume"
+    NUT = "nut"
+    SEED = "seed"
+    HERB = "herb"
+    SPICE = "spice"
+    FUNGI = "fungi"
+    TUBER = "tuber"
+    SEA_VEGETABLE = "sea_vegetable"
+    SPROUT = "sprout"
+    FERMENTED = "fermented"
+    PSEUDOCEREAL = "pseudocereal"
+    FLOWER = "flower"
+    OIL = "oil"
+    ALGAE = "algae"
+    CACTUS = "cactus"
+    BAMBOO_SHOOT = "bamboo_shoot"
+    PALM_HEART = "palm_heart"
+
+
+class Meal(BaseModel):
+    meal_id: int
+    user_id: str
+    date: date
+    name: str
+    food_groups: list[FoodGroup]

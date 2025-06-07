@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Meal</title>
+</head>
+<body>
+    <h1>Create a Meal</h1>
+    <form action="{{ request.url_for('meals') }}" method="post">
+
+        <label for="name">Meal Name:</label>
+        <input type="text" id="name" name="name" required><br><br>
+
+        <label for="food_groups">Food Groups:</label>
+        <select id="food_groups" name="food_groups" multiple required>
+            {% for group in food_groups %}
+                <option value="{{ group.value }}">{{ group.value.replace('_', ' ').title() }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <button type="submit">Create Meal</button>
+    </form>
+</body>
+</html>
