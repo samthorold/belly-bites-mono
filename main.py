@@ -1,5 +1,5 @@
 import logging
-from datetime import date
+from datetime import date, datetime
 from typing import Any
 
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -11,7 +11,8 @@ from starlette.routing import Route
 
 from app.auth import Auth
 from app.config import Settings
-from app.models import FoodGroup, Meal, UserInfo
+from app.models import FoodGroup, NewMeal, UserInfo
+from app.repos import InMemoryMealRepo
 
 settings = Settings()
 
@@ -33,14 +34,11 @@ auth = Auth(
     domain=settings.AUTH0_DOMAIN,
 )
 
-meals_repo: list[Meal] = []
+meals_repo = InMemoryMealRepo()
 
 
 async def home(request: Request) -> HTMLResponse | RedirectResponse:
     user = request.session.get("user")
-    # if user is None:
-    #     logger.info("User not logged in, redirecting to login")
-    #     return RedirectResponse(url="/login")
     user = UserInfo.model_validate_json(user).given_name if user else "Anon"
     template = templates.get_template("home.html")
     return HTMLResponse(template.render(app_name=settings.APP_NAME, user=user))
@@ -54,26 +52,29 @@ async def meals(request: Request) -> HTMLResponse | RedirectResponse:
 
     user_info = UserInfo.model_validate_json(user)
     if request.method == "POST":
-        # Here you would handle the form submission to create a meal
-        # For now, we just log the action and redirect to home
         data = await request.form()
         logger.info("%s create meal %s", user_info.sub, data)
-        meal = Meal(
-            meal_id=len(meals_repo) + 1,  # Simple ID generation
+        new_meal = NewMeal(
             user_id=user_info.sub,
             name=str(data.get("name")),
-            date=date.today(),
+            date=(
+                datetime.strptime(str(data.get("date")), "%Y-%m-%d").date()
+                if data.get("date")
+                else date.today()
+            ),
             food_groups=(
-                [FoodGroup(data.get("food_groups"))] if data.get("food_groups") else []
+                [FoodGroup(fg) for fg in data.getlist("food_groups")]
+                if data.get("food_groups")
+                else []
             ),
         )
-        meals_repo.append(meal)
+        meal = await meals_repo.create(new_meal)
         logger.info("Meal created: %s", meal)
         return RedirectResponse(url=request.url_for("meals"), status_code=303)
 
     logger.info("User %s visiting %s", user_info.sub, request.url.path)
 
-    user_meals = [meal for meal in meals_repo if meal.user_id == user_info.sub]
+    user_meals = await meals_repo.get_for_user(user_info.sub)
 
     template = templates.get_template("meals.html")
     return HTMLResponse(

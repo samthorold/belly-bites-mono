@@ -9,7 +9,7 @@
     <a href="{{ request.url_for('create_meal') }}">Create a Meal</a>
     {% for meal in meals %}
         <div>
-            <p>{{ meal.name }}. Food Groups: {% for food_group in meal.food_groups %} {{ food_group.value }} {% endfor %}</p>
+            <p>[{{ meal.date.strftime('%Y-%m-%d') }}] {{ meal.name }}: {% for food_group in meal.food_groups %} {{ food_group.value }} {% endfor %}</p>
         </div>
     {% else %}
         <p>No meals 😱</p>

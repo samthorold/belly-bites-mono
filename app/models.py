@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import date, datetime
 from enum import Enum
 
@@ -55,9 +57,12 @@ class FoodGroup(Enum):
     PALM_HEART = "palm_heart"
 
 
-class Meal(BaseModel):
-    meal_id: int
+class NewMeal(BaseModel):
     user_id: str
     date: date
     name: str
     food_groups: list[FoodGroup]
+
+
+class Meal(NewMeal):
+    meal_id: int
