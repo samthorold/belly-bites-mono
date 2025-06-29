@@ -1,18 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Meals</title>
-</head>
-<body>
-    <h1>Meals</h1>
-    <a href="{{ request.url_for('create_meal') }}">Create a Meal</a>
-    {% for meal in meals %}
-        <div>
-            <p>[{{ meal.date.strftime('%Y-%m-%d') }}] {{ meal.name }}: {% for food_group in meal.food_groups %} {{ food_group.value }} {% endfor %}</p>
-        </div>
-    {% else %}
-        <p>No meals 😱</p>
-    {% endfor %}
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="title">Meals</h1>
+<a href="{{ request.url_for('create_meal') }}">Create a Meal</a>
+{% for meal in meals %}
+    <div>
+        <p>[{{ meal.date.strftime('%Y-%m-%d') }}] {{ meal.name }}: {% for food_group in meal.food_groups %} {{ food_group.value }} {% endfor %}</p>
+    </div>
+{% else %}
+    <p>No meals 😱</p>
+{% endfor %}
+{% endblock %}
