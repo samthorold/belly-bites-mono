@@ -28,6 +28,7 @@ class InMemoryMealRepo:
             user_id=new_meal.user_id,
             date=new_meal.date,
             name=new_meal.name,
+            type=new_meal.type,
             food_groups=new_meal.food_groups,
         )
         self.meals.append(meal)

@@ -10,7 +10,7 @@ from starlette.routing import Route
 
 from app.auth import Auth
 from app.config import Settings
-from app.models import FoodGroup, NewMeal, UserInfo
+from app.models import FoodGroup, MealType, NewMeal, UserInfo
 from app.repos import InMemoryMealRepo
 
 settings = Settings()
@@ -74,7 +74,12 @@ async def create_meal(request: Request) -> HTMLResponse | RedirectResponse:
 
     template = templates.get_template("create_meal.html")
     return HTMLResponse(
-        template.render(food_groups=list(FoodGroup), request=request, user=user_info)
+        template.render(
+            food_groups=list(FoodGroup),
+            meal_types=list(MealType),
+            request=request,
+            user=user_info,
+        )
     )
 
 

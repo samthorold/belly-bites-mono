@@ -11,6 +11,14 @@
         <label for="name">Meal Name:</label>
         <input type="text" id="name" name="name" required><br><br>
 
+        <label for="type">Meal Type:</label>
+        <select id="type" name="type" required>
+            <option value="" disabled selected>Select a meal type</option>
+            {% for type in meal_types %}
+                <option value="{{ type.value }}">{{ type.value.replace('_', ' ').title() }}</option>
+            {% endfor %}
+        </select><br><br>
+
         <label for="date">Date:</label>
         <input type="date" id="date" name="date" required><br><br>
 

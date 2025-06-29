@@ -58,10 +58,18 @@ class FoodGroup(Enum):
     PALM_HEART = "palm_heart"
 
 
+class MealType(Enum):
+    BREAKFAST = "breakfast"
+    LUNCH = "lunch"
+    DINNER = "dinner"
+    SNACK = "snack"
+
+
 class NewMeal(BaseModel):
     user_id: str
     date: date
     name: str
+    type: MealType
     food_groups: list[FoodGroup]
 
     @classmethod
@@ -69,6 +77,7 @@ class NewMeal(BaseModel):
         return NewMeal(
             user_id=user_id,
             name=str(data.get("name")),
+            type=MealType(data.get("type")),
             date=(
                 datetime.strptime(str(data.get("date")), "%Y-%m-%d").date()
                 if data.get("date")
