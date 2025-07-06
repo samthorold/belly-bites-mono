@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1 class="title">Meals</h1>
+<h3 class="subtitle">Meals</h3>
 <a href="{{ request.url_for('create_meal') }}">Create a Meal</a>
 {% for meal in meals %}
     <div>

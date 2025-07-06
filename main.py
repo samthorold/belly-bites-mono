@@ -36,11 +36,16 @@ auth = Auth(
 meals_repo = InMemoryMealRepo()
 
 
-async def home(request: Request) -> HTMLResponse | RedirectResponse:
+async def home(request: Request) -> HTMLResponse:
     user = request.session.get("user")
     user_name = UserInfo.model_validate_json(user).given_name if user else "Anon"
+    is_logged_in = user is not None
     template = templates.get_template("home.html")
-    return HTMLResponse(template.render(app_name=settings.APP_NAME, user=user_name))
+    return HTMLResponse(
+        template.render(
+            app_name=settings.APP_NAME, user=user_name, is_logged_in=is_logged_in
+        )
+    )
 
 
 async def meals(request: Request) -> HTMLResponse | RedirectResponse:
@@ -61,7 +66,12 @@ async def meals(request: Request) -> HTMLResponse | RedirectResponse:
     user_meals = await meals_repo.get_for_user(user_info.sub)
     template = templates.get_template("meals.html")
     return HTMLResponse(
-        template.render(user=user_info, meals=user_meals, request=request)
+        template.render(
+            user=user_info,
+            meals=user_meals,
+            request=request,
+            is_logged_in=True,
+        )
     )
 
 
@@ -79,6 +89,7 @@ async def create_meal(request: Request) -> HTMLResponse | RedirectResponse:
             meal_types=list(MealType),
             request=request,
             user=user_info,
+            is_logged_in=True,
         )
     )
 
