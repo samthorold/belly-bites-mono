@@ -18,12 +18,39 @@
     <label for="date">Date:</label>
     <input type="date" id="date" name="date" required><br><br>
 
-    <label for="food_groups">Food Groups:</label>
-    <select id="food_groups" name="food_groups" multiple required>
-        {% for group in food_groups %}
-            <option value="{{ group.value }}">{{ group.value.replace('_', ' ').title() }}</option>
-        {% endfor %}
-    </select><br><br>
+
+    <label>Ingredients:</label>
+    <div id="ingredients-list">
+        <div class="ingredient-pair">
+            <input type="text" name="ingredient_names[]" placeholder="Ingredient Name" required>
+            <select name="ingredient_groups[]" required>
+                <option value="" disabled selected>Select food group</option>
+                {% for group in food_groups %}
+                    <option value="{{ group.value }}">{{ group.value.replace('_', ' ').title() }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <button type="button" onclick="addIngredient()">Add Ingredient</button><br><br>
+
+    <script>
+    function addIngredient() {
+        const container = document.getElementById('ingredients-list');
+        const div = document.createElement('div');
+        div.className = 'ingredient-pair';
+        div.innerHTML = `
+            <input type="text" name="ingredient_names[]" placeholder="Ingredient Name" required>
+            <select name="ingredient_groups[]" required>
+                <option value="" disabled selected>Select food group</option>
+                {% for group in food_groups %}
+                    <option value="{{ group.value }}">{{ group.value.replace('_', ' ').title() }}</option>
+                {% endfor %}
+            </select>
+            <button type="button" onclick="this.parentElement.remove()">Remove</button>
+        `;
+        container.appendChild(div);
+    }
+    </script>
 
     <button class="button is-primary" type="submit">Create Meal</button>
 </form>

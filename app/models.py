@@ -58,6 +58,11 @@ class FoodGroup(Enum):
     PALM_HEART = "palm_heart"
 
 
+class Ingredient(BaseModel):
+    name: str
+    food_group: FoodGroup
+
+
 class MealType(Enum):
     BREAKFAST = "breakfast"
     LUNCH = "lunch"
@@ -70,10 +75,21 @@ class NewMeal(BaseModel):
     date: date
     name: str
     type: MealType
-    food_groups: list[FoodGroup]
+    ingredients: list[Ingredient]
 
     @classmethod
     def from_form_data(cls, data: FormData, user_id: str) -> NewMeal:
+        maybe_ingredient_names = data.get("ingredient_names[]")
+        if not maybe_ingredient_names:
+            raise ValueError("Ingredient names are required.")
+        maybe_ingredient_groups = data.get("ingredient_groups[]")
+        if not maybe_ingredient_groups:
+            raise ValueError("Ingredient groups are required.")
+        ingredient_names = data.getlist("ingredient_names[]")
+        ingredient_groups = data.getlist("ingredient_groups[]")
+        if len(ingredient_names) != len(ingredient_groups):
+            raise ValueError("Ingredient names and groups must match in length.")
+
         return NewMeal(
             user_id=user_id,
             name=str(data.get("name")),
@@ -83,10 +99,11 @@ class NewMeal(BaseModel):
                 if data.get("date")
                 else date.today()
             ),
-            food_groups=(
-                [FoodGroup(fg) for fg in data.getlist("food_groups")]
-                if data.get("food_groups")
-                else []
+            ingredients=(
+                [
+                    Ingredient(name=str(name), food_group=FoodGroup(fg))
+                    for name, fg in zip(ingredient_names, ingredient_groups)
+                ]
             ),
         )
 
