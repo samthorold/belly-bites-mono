@@ -10,6 +10,8 @@ class MealRepoProtocol(Protocol):
 
     async def get_for_user(self, user_id: str) -> list[Meal]: ...
 
+    async def delete(self, meal_id: int) -> None: ...
+
 
 class InMemoryMealRepo:
     def __init__(self):
@@ -36,3 +38,6 @@ class InMemoryMealRepo:
 
     async def get_for_user(self, user_id: str) -> list[Meal]:
         return [meal for meal in self.meals if meal.user_id == user_id]
+
+    async def delete(self, meal_id: int) -> None:
+        self.meals = [meal for meal in self.meals if meal.meal_id != meal_id]

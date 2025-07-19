@@ -94,6 +94,29 @@ async def create_meal(request: Request) -> HTMLResponse | RedirectResponse:
     )
 
 
+async def meal_detail(request: Request) -> HTMLResponse | RedirectResponse:
+    user = request.session.get("user")
+    if user is None:
+        logger.info("User not logged in, redirecting to login")
+        return RedirectResponse(url="/login")
+
+    maybe_meal_id = request.path_params.get("meal_id")
+    if not maybe_meal_id:
+        logger.error("Meal ID not provided in request path")
+        return RedirectResponse(url=request.url_for("meals"), status_code=400)
+
+    meal_id = int(maybe_meal_id)
+
+    if request.method == "DELETE":
+        logger.info("Deleting meal id %d", meal_id)
+        await meals_repo.delete(meal_id)
+
+        return RedirectResponse(url=request.url_for("meals"), status_code=303)
+    else:
+        logger.error("Unsupported method %s for meal detail", request.method)
+        return RedirectResponse(url=request.url_for("meals"), status_code=405)
+
+
 async def callback(request: Request) -> RedirectResponse:
     token = await auth.authorise_access_token(request)
     request.session["user"] = token.userinfo.model_dump_json()
@@ -121,6 +144,9 @@ app = Starlette(
         Route("/callback", callback, methods=["GET", "POST"], name="callback"),
         Route("/meals", meals, methods=["GET", "POST"], name="meals"),
         Route("/meals/create", create_meal, methods=["GET"], name="create_meal"),
+        Route(
+            "/meals/{meal_id:int}", meal_detail, methods=["DELETE"], name="meal_detail"
+        ),
     ]
 )
 

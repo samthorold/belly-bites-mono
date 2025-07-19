@@ -5,9 +5,27 @@
 <a href="{{ request.url_for('create_meal') }}">Create a Meal</a>
 {% for meal in meals %}
     <div>
-        <p>[{{ meal.date.strftime('%Y-%m-%d') }} {{ meal.type.value }}] {{ meal.name }}: {% for ingredient in meal.ingredients %} {{ ingredient.name }} ({{ ingredient.food_group.value }}) {% endfor %}</p>
+        <p>
+            [{{ meal.date.strftime('%Y-%m-%d') }} {{ meal.type.value }}] {{ meal.name }}:
+            {% for ingredient in meal.ingredients %} {{ ingredient.name }} ({{ ingredient.food_group.value }}) {% endfor %}
+            <button onclick="deleteMeal({{ meal.meal_id }}, '{{ meal.name }}')">Delete</button>
+            <!-- <form action="{{ request.url_for('meal_detail', meal_id=meal.meal_id) }}" method="post" style="display:inline;">
+                <input type="hidden" name="_method" value="delete">
+                <button type="submit" onclick="return confirm('Delete {{ meal.name }}?')">Delete</button>
+            </form> -->
+        </p>
     </div>
 {% else %}
     <p>No meals 😱</p>
 {% endfor %}
+<script>
+function deleteMeal(mealId, mealName) {
+    if (!confirm('Delete ' + mealName + '?')) return;
+    fetch(`/meals/${mealId}`, { method: 'DELETE' })
+        .then(res => {
+            if (res.ok) location.reload();
+            else alert('Failed to delete');
+        });
+}
+</script>
 {% endblock %}
