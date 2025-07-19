@@ -82,14 +82,14 @@ async def create_meal(request: Request) -> HTMLResponse | RedirectResponse:
         return RedirectResponse(url="/login")
     user_info = UserInfo.model_validate_json(user)
 
-    template = templates.get_template("create_meal.html")
+    template = templates.get_template("meal_detail.html")
     return HTMLResponse(
         template.render(
             food_groups=list(FoodGroup),
             meal_types=list(MealType),
             request=request,
             user=user_info,
-            is_logged_in=True,
+            meal=None,
         )
     )
 
@@ -99,6 +99,7 @@ async def meal_detail(request: Request) -> HTMLResponse | RedirectResponse:
     if user is None:
         logger.info("User not logged in, redirecting to login")
         return RedirectResponse(url="/login")
+    user_info = UserInfo.model_validate_json(user)
 
     maybe_meal_id = request.path_params.get("meal_id")
     if not maybe_meal_id:
@@ -106,6 +107,34 @@ async def meal_detail(request: Request) -> HTMLResponse | RedirectResponse:
         return RedirectResponse(url=request.url_for("meals"), status_code=400)
 
     meal_id = int(maybe_meal_id)
+    try:
+        meal = await meals_repo.get(meal_id)
+    except ValueError:
+        logger.error("Meal not found: %d", meal_id)
+        return RedirectResponse(url=request.url_for("meals"), status_code=404)
+    if meal.user_id != user_info.sub:
+        logger.error("User %s not authorized for meal %d", user_info.sub, meal_id)
+        return RedirectResponse(url=request.url_for("meals"), status_code=403)
+
+    if request.method == "GET":
+        template = templates.get_template("meal_detail.html")
+        return HTMLResponse(
+            template.render(
+                food_groups=list(FoodGroup),
+                meal_types=list(MealType),
+                request=request,
+                user=user_info,
+                meal=meal,
+            )
+        )
+
+    if request.method == "POST":
+        data = await request.form()
+        logger.info("%s update meal %s", user_info.sub, data)
+        new_meal = NewMeal.from_form_data(data, user_info.sub)
+        meal = await meals_repo.update(meal_id, new_meal)
+        logger.info("%s meal upated: %s", user_info.sub, meal)
+        return RedirectResponse(url=request.url_for("meals"), status_code=303)
 
     if request.method == "DELETE":
         logger.info("Deleting meal id %d", meal_id)
@@ -145,7 +174,10 @@ app = Starlette(
         Route("/meals", meals, methods=["GET", "POST"], name="meals"),
         Route("/meals/create", create_meal, methods=["GET"], name="create_meal"),
         Route(
-            "/meals/{meal_id:int}", meal_detail, methods=["DELETE"], name="meal_detail"
+            "/meals/{meal_id:int}",
+            meal_detail,
+            methods=["GET", "POST", "DELETE"],
+            name="meal_detail",
         ),
     ]
 )

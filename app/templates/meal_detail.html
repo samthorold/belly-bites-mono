@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h3 class="subtitle">{% if meal %} {{ meal.name.title() }} {% else %} Create a Meal {% endif %}</h3>
+<form
+    action="{% if meal %} {{request.url_for('meal_detail', meal_id=meal.meal_id)}} {% else %} {{ request.url_for('meals') }} {% endif %}"
+    method="post">
+
+    <label for="name">Meal Name:</label>
+    <input type="text" id="name" name="name" required {% if meal %} value="{{ meal.name }}" {% endif %}><br><br>
+
+
+    <label for="type">Meal Type:</label>
+    <select id="type" name="type" required>
+        {% if not meal %} <option value="" disabled selected>Select a meal type</option> {% endif %}
+        {% for type in meal_types %}
+        <option value="{{ type.value }}" {% if meal and type==meal.type %} selected {% endif %}>{{
+            type.value.replace('_', ' ' ).title() }}</option>
+        {% endfor %}
+    </select><br><br>
+
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" required {% if meal %} value="{{ meal.date.strftime('%Y-%m-%d') }}" {%
+        endif %}><br><br>
+
+    <label>Ingredients:</label>
+    <div id="ingredients-list">
+
+        {% if meal %}
+
+        {% for ingredient in meal.ingredients %}
+        <div class="ingredient-pair">
+            <input type="text" name="ingredient_names[]" placeholder="Ingredient Name" value="{{ ingredient.name }}"
+                required>
+            <select name="ingredient_groups[]" required>
+                {% for group in food_groups %}
+                <option value="{{ group.value }}" {% if meal and group==ingredient.food_group %} selected {% endif %}>
+                    {{ group.value.replace('_', ' ').title() }}
+                </option>
+                {% endfor %}
+            </select>
+            <button type="button" onclick="this.parentElement.remove()">Remove</button>
+        </div>
+        {% endfor %}
+
+        {% else %}
+
+        <div class="ingredient-pair">
+            <input type="text" name="ingredient_names[]" placeholder="Ingredient Name" required>
+            <select name="ingredient_groups[]" required>
+                <option value="" disabled selected>Select food group</option>
+                {% for group in food_groups %}
+                <option value="{{ group.value }}">{{ group.value.replace('_', ' ').title() }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {% endif %}
+    </div>
+    <button type="button" onclick="addIngredient()">Add Ingredient</button><br><br>
+
+    <script>
+        function addIngredient() {
+            const container = document.getElementById('ingredients-list');
+            const div = document.createElement('div');
+            div.className = 'ingredient-pair';
+            div.innerHTML = `
+            <input type="text" name="ingredient_names[]" placeholder="Ingredient Name" required>
+            <select name="ingredient_groups[]" required>
+                <option value="" disabled selected>Select food group</option>
+                {% for group in food_groups %}
+                    <option value="{{ group.value }}">{{ group.value.replace('_', ' ').title() }}</option>
+                {% endfor %}
+            </select>
+            <button type="button" onclick="this.parentElement.remove()">Remove</button>
+        `;
+            container.appendChild(div);
+        }
+    </script>
+
+    <button class="button is-primary" type="submit">{% if meal %} Update {% else %} Create {% endif %} Meal</button>
+</form>
+{% endblock %}
